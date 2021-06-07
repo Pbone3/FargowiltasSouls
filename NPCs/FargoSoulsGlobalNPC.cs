@@ -821,13 +821,19 @@ namespace FargowiltasSouls.NPCs
                         Item.NewItem(npc.Hitbox, ModContent.ItemType<BrainStaff>());
                         break;
 
+                    case NPCID.DD2DarkMageT1:
+                    case NPCID.DD2DarkMageT3:
+                        if (npc.type == NPCID.DD2DarkMageT1 ? true : Main.rand.Next(2) == 0)
+                            Item.NewItem(npc.Hitbox, ModContent.ItemType<DarkMageBook>());
+                        break;
+
                     case NPCID.QueenBee:
                         Item.NewItem(npc.Hitbox, ModContent.ItemType<TheSmallSting>());
                         break;
 
                     case NPCID.SkeletronHead:
                         Item.NewItem(npc.Hitbox, ModContent.ItemType<BoneZone>());
-                        Item.NewItem(npc.Hitbox, ModContent.ItemType<BrittleBone>(), 200);
+                        //Item.NewItem(npc.Hitbox, ModContent.ItemType<BrittleBone>(), 200);
                         break;
 
                     case NPCID.WallofFlesh:
