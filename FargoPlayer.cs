@@ -361,6 +361,8 @@ namespace FargowiltasSouls
         public int MasomodeFreezeTimer = 0;
         public int MasomodeSpaceBreathTimer = 0;
 
+        public int DarkMageBookCounter;
+
         public IList<string> disabledSouls = new List<string>();
 
         private Mod dbzMod = ModLoader.GetMod("DBZMOD");

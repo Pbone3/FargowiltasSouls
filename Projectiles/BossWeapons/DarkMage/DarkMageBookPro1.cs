@@ -3,6 +3,7 @@ using Terraria.ModLoader;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Terraria.ID;
+using System;
 
 namespace FargowiltasSouls.Projectiles.BossWeapons.DarkMage
 {
@@ -19,6 +20,7 @@ namespace FargowiltasSouls.Projectiles.BossWeapons.DarkMage
         }
 
         public float Counter { get => projectile.ai[0]; set => projectile.ai[0] = value; }
+        public float RotationFlag { get => projectile.localAI[1]; set => projectile.localAI[1] = value; }
 
         public override void AI()
         {
@@ -28,7 +30,7 @@ namespace FargowiltasSouls.Projectiles.BossWeapons.DarkMage
 
             if (projectile.damage > 0)
             {
-                // Safe damage it was spawned with
+                // Save damage it was spawned with
                 projectile.ai[1] = projectile.damage;
                 projectile.damage = 0;
             }
@@ -36,25 +38,33 @@ namespace FargowiltasSouls.Projectiles.BossWeapons.DarkMage
             // Slow down
             projectile.velocity *= 0.95f;
 
-            // Twice, at 32 ticks and right before death
-            if (Counter++ % 16 == 0 && Counter > 17)
+            // Twice, at 40 ticks and once at 60
+            if (Counter++ % 20 == 0 && Counter > 21)
             {
                 // Shoot
-                Projectile.NewProjectile(projectile.Center, projectile.DirectionTo(Main.MouseWorld) * 8, ProjectileID.BookStaffShot, (int)projectile.ai[1], 1f, projectile.owner);
+                Vector2 velocity = projectile.DirectionTo(Main.MouseWorld) * 8;
+                Projectile.NewProjectile(projectile.Center, velocity, ModContent.ProjectileType<DarkMagePage>(), (int)projectile.ai[1], 1f, projectile.owner);
             }
 
-            if (Counter >= 50)
+            if (Counter >= 61)
             {
                 // Die
                 projectile.Kill();
 
                 // Dust
-                Gore.NewGore(projectile.Center, default, GoreID.PageScrap);
+                Gore g = Gore.NewGoreDirect(projectile.Center, default, GoreID.PageScrap);
+                g.timeLeft -= 60;
 
                 if (Main.rand.NextBool(4))
-                    Gore.NewGore(projectile.Center, default, GoreID.Pages);
+                {
+                    g = Gore.NewGoreDirect(projectile.Center, default, GoreID.Pages);
+                    g.timeLeft -= 60;
+                }
                 if (Main.rand.NextBool(5))
-                    Gore.NewGore(projectile.Center, default, GoreID.PageScrap);
+                {
+                    g = Gore.NewGoreDirect(projectile.Center, default, GoreID.PageScrap);
+                    g.timeLeft -= 60;
+                }
 
                 for (int i = 0; i < 7; i++)
                 {
@@ -63,12 +73,34 @@ namespace FargowiltasSouls.Projectiles.BossWeapons.DarkMage
                 }
             }
 
+            // Only run on owner client
             if (projectile.owner == Main.myPlayer)
             {
-                // Rotate to cursor pos
-                projectile.rotation = Utils.AngleLerp(projectile.rotation, projectile.DirectionTo(Main.MouseWorld).ToRotation(), 0.3f);
+                if (RotationFlag == 0)
+                {
+                    // Spain without the A
+                    projectile.rotation += MathHelper.Pi / 12;
+                    if (projectile.rotation > MathHelper.TwoPi)
+                        projectile.rotation -= MathHelper.TwoPi;
+
+                    Vector2 directionTo = projectile.DirectionTo(Main.MouseWorld);
+                    directionTo.Normalize();
+                    float compare = directionTo.ToRotation();
+
+                    // Spin for a bit, then wait until you're close to facing cursor
+                    if (Counter > 24 && AngDiff(projectile.rotation, compare) < 0.25f)
+                    {
+                        RotationFlag = 1;
+                    }
+                }
+                else
+                {
+                    projectile.rotation = Utils.AngleLerp(projectile.rotation, projectile.DirectionTo(Main.MouseWorld).ToRotation(), 0.3f);
+                }
             }
         }
+
+        private float AngDiff(float a, float b) => (float)Math.Atan2(Math.Sin(a - b), Math.Cos(a - b));
 
         public override bool OnTileCollide(Vector2 oldVelocity) => false;
 
